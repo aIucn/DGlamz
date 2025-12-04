@@ -291,23 +291,63 @@ button:hover {
   function addToCart(button) {
     const productDiv = button.parentElement;
     const name = productDiv.dataset.name;
-    const price = productDiv.dataset.price;
-    window.cart.push({name, price});
+    const price = parseFloat(productDiv.dataset.price);
+    if (!window.cart) {
+      // Initialize cart as a Map (hash table) for efficient lookup
+      window.cart = new Map();
+    }
+    if (window.cart.has(name)) {
+      const item = window.cart.get(name);
+      item.quantity += 1;
+      window.cart.set(name, item);
+    } else {
+      window.cart.set(name, { name, price, quantity: 1 });
+    }
     updateCartUI();
     updateBadge();
+    showAddMessage();
   }
+
+  function updateCartUI() {
+    const container = document.getElementById('cart-items');
+    if (!container) return;
+    container.innerHTML = '';
+    // Convert Map to Array for sorting and iteration
+    const itemsArray = Array.from(window.cart.values());
+    // Sort items alphabetically by name (algorithm: sorting)
+    itemsArray.sort((a, b) => a.name.localeCompare(b.name));
+    // Render each item
+    itemsArray.forEach((item) => {
+      const li = document.createElement('li');
+      li.textContent = `${item.name} - $${item.price} x${item.quantity}`;
+      const btn = document.createElement('button');
+      btn.textContent = 'Remove';
+      btn.style.marginLeft = '10px';
+      btn.onclick = () => {
+        // Remove item from cart (hash table delete)
+        window.cart.delete(item.name);
+        updateCartUI();
+        updateBadge();
+      };
+      li.appendChild(btn);
+      container.appendChild(li);
+    });
+  }
+
+  function updateBadge() {
+    // Calculate total quantity of items in cart
+    const count = window.cart ? Array.from(window.cart.values()).reduce((sum, item) => sum + item.quantity, 0) : 0;
+    const badge = document.getElementById('cart-badge');
+    badge.textContent = count;
+    badge.style.display = count > 0 ? 'flex' : 'none';
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
-    window.cart = [];
-    const cartButton = document.getElementById('cart-toggle');
+    window.cart = new Map();
+    const cartBtn = document.getElementById('cart-toggle');
     const cartPanel = document.getElementById('cart');
     const closeBtn = document.getElementById('close-cart');
-    const cartBadge = document.getElementById('cart-badge');
-    function updateBadge() {
-      const count = window.cart.length;
-      cartBadge.textContent = count;
-      cartBadge.style.display = count > 0 ? 'flex' : 'none';
-    }
-    cartButton.onclick = () => {
+    cartBtn.onclick = () => {
       if (cartPanel.style.display === 'block') {
         cartPanel.style.display = 'none';
       } else {
@@ -318,32 +358,15 @@ button:hover {
     closeBtn.onclick = () => {
       cartPanel.style.display = 'none';
     };
-    function updateCartUI() {
-      const cartItemsContainer = document.getElementById('cart-items');
-      if (!cartItemsContainer) return;
-      cartItemsContainer.innerHTML = '';
-      window.cart.forEach((item, index) => {
-        const li = document.createElement('li');
-        li.textContent = `${item.name} - $${item.price}`;
-        const removeBtn = document.createElement('button');
-        removeBtn.textContent = 'Remove';
-        removeBtn.style.marginLeft = '10px';
-        removeBtn.onclick = () => {
-          window.cart.splice(index, 1);
-          updateCartUI();
-          updateBadge();
-        };
-        li.appendChild(removeBtn);
-        cartItemsContainer.appendChild(li);
-      });
-    }
     document.getElementById('checkout').onclick = () => {
-      if (window.cart.length === 0) {
+      if (window.cart.size === 0) {
         alert('Your cart is empty!');
       } else {
-        const total = window.cart.reduce((sum, item) => sum + parseFloat(item.price), 0);
+        // Calculate total price (algorithm: summation over cart items)
+        const total = Array.from(window.cart.values()).reduce((sum, item) => sum + item.price * item.quantity, 0);
         alert(`Thank you for your purchase! Total: $${total.toFixed(2)}`);
-        window.cart.length = 0;
+        // Clear the cart (hash table clear)
+        window.cart.clear();
         updateCartUI();
         updateBadge();
         document.getElementById('cart').style.display = 'none';
@@ -351,39 +374,46 @@ button:hover {
     };
     updateBadge();
   });
-</script>
-<script>
+
   function addToCart(button) {
     const productDiv = button.parentElement;
     const name = productDiv.dataset.name;
-    const price = productDiv.dataset.price;
-    window.cart.push({name, price});
+    const price = parseFloat(productDiv.dataset.price);
+    if (!window.cart) {
+      window.cart = new Map();
+    }
+    if (window.cart.has(name)) {
+      const item = window.cart.get(name);
+      item.quantity += 1;
+      window.cart.set(name, item);
+    } else {
+      window.cart.set(name, { name, price, quantity: 1 });
+    }
     updateCartUI();
     updateBadge();
     showAddMessage();
   }
 
   function showAddMessage() {
-    let messageDiv = document.getElementById('add-message');
-    if (!messageDiv) {
-      messageDiv = document.createElement('div');
-      messageDiv.id = 'add-message';
-      messageDiv.style.position = 'fixed';
-      messageDiv.style.top = '20px';
-      messageDiv.style.right = '20px';
-      messageDiv.style.backgroundColor = 'rgba(0,0,0,0.8)';
-      messageDiv.style.color = '#fff';
-      messageDiv.style.padding = '10px 20px';
-      messageDiv.style.borderRadius = '5px';
-      messageDiv.style.fontSize = '1em';
-      document.body.appendChild(messageDiv);
+    let msgDiv = document.getElementById('add-message');
+    if (!msgDiv) {
+      msgDiv = document.createElement('div');
+      msgDiv.id = 'add-message';
+      msgDiv.style.position = 'fixed';
+      msgDiv.style.top = '20px';
+      msgDiv.style.right = '20px';
+      msgDiv.style.backgroundColor = 'rgba(0,0,0,0.8)';
+      msgDiv.style.color = '#fff';
+      msgDiv.style.padding = '10px 20px';
+      msgDiv.style.borderRadius = '5px';
+      msgDiv.style.fontSize = '1em';
+      document.body.appendChild(msgDiv);
     }
-    messageDiv.textContent = 'Added to cart';
-    messageDiv.style.display = 'block';
-
+    msgDiv.textContent = 'Added to cart';
+    msgDiv.style.display = 'block';
     clearTimeout(window.addMsgTimeout);
     window.addMsgTimeout = setTimeout(() => {
-      messageDiv.style.display = 'none';
+      msgDiv.style.display = 'none';
     }, 1000);
   }
 </script>
