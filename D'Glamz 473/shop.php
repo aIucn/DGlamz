@@ -293,7 +293,7 @@ button:hover {
     const name = productDiv.dataset.name;
     const price = parseFloat(productDiv.dataset.price);
     if (!window.cart) {
-      // Initialize cart as a Map (hash table) for efficient lookup
+      // DSA implemented as a Map (hash table)
       window.cart = new Map();
     }
     if (window.cart.has(name)) {
@@ -312,11 +312,11 @@ button:hover {
     const container = document.getElementById('cart-items');
     if (!container) return;
     container.innerHTML = '';
-    // Convert Map to Array for sorting and iteration
+    // Convert Map to Array for sorting
     const itemsArray = Array.from(window.cart.values());
-    // Sort items alphabetically by name (algorithm: sorting)
+
     itemsArray.sort((a, b) => a.name.localeCompare(b.name));
-    // Render each item
+
     itemsArray.forEach((item) => {
       const li = document.createElement('li');
       li.textContent = `${item.name} - $${item.price} x${item.quantity}`;
@@ -324,7 +324,7 @@ button:hover {
       btn.textContent = 'Remove';
       btn.style.marginLeft = '10px';
       btn.onclick = () => {
-        // Remove item from cart (hash table delete)
+
         window.cart.delete(item.name);
         updateCartUI();
         updateBadge();
@@ -335,7 +335,7 @@ button:hover {
   }
 
   function updateBadge() {
-    // Calculate total quantity of items in cart
+
     const count = window.cart ? Array.from(window.cart.values()).reduce((sum, item) => sum + item.quantity, 0) : 0;
     const badge = document.getElementById('cart-badge');
     badge.textContent = count;
@@ -362,10 +362,10 @@ button:hover {
       if (window.cart.size === 0) {
         alert('Your cart is empty!');
       } else {
-        // Calculate total price (algorithm: summation over cart items)
+
         const total = Array.from(window.cart.values()).reduce((sum, item) => sum + item.price * item.quantity, 0);
         alert(`Thank you for your purchase! Total: $${total.toFixed(2)}`);
-        // Clear the cart (hash table clear)
+
         window.cart.clear();
         updateCartUI();
         updateBadge();
